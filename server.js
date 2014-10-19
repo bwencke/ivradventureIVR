@@ -52,11 +52,14 @@ function queryDB(query, callback) {
     var ret = "";
 
     connection.query(query, function(err, rows, fields) {
-      if (err) throw err;
+        if (err) throw err;
+        if(rows.length === 0) {
+            callback(null);
+        }
 
-      ret = rows;
-      console.log('Query Result: ', rows);
-      callback(rows);
+        ret = rows;
+        console.log('Query Result: ', rows);
+        callback(rows);
     });
 
     return ret;
@@ -152,19 +155,39 @@ app.post( '/nextaction', function( request, response ) {
     }
     if(!currentChapter) {
         console.log("Load First Chapter");
-        queryDB('SELECT * FROM storybook.stories WHERE id=' + story.id, function(result) {
-            console.log("Save story data");
-            story.name = result[0].name;
-            story.chapter_one = result[0].chapter_one;
+        if(action == "first_chapter") {
             currentChapter = new Chapter();
-            currentChapter.id = result[0].chapter_one;
+            currentChapter.id = story.chapter_one;
             queryDB('SELECT * FROM storybook.chapters WHERE story_id=' + story.id + ' AND id=' + currentChapter.id, function(queryResults) {
-                        loadChapter(queryResults);
-                        var ret = playMsg("chapter_digits", currentChapter.play());
-                        sendResponse(ret);
-                        return;
-                    });
+                if(!queryResults) {
+                    // error
+                    var ret = playMsg(null, "Oh, no! Chapter id not found!");
+                    sendResponse(ret);
+                    return;
+                } else {
+                    loadChapter(queryResults);
+                    var ret = playMsg("chapter_digits", currentChapter.play());
+                    sendResponse(ret);
+                    return;
+                }
             });
+        } else {
+            queryDB('SELECT * FROM storybook.stories WHERE id=' + story.id, function(result) {
+                if(!result) {
+                    // error
+                    story = null;
+                    var ret = playMsg(null, "Invalid story id! BETTER LUCK NEXT TIME!!!!");
+                    sendResponse(ret);
+                    return;
+                } else {
+                    story.name = result[0].name || "";
+                    story.chapter_one = result[0].chapter_one;
+                    var ret = playMsg("first_chapter", story.name);
+                    sendResponse(ret);
+                    return;
+                }
+            });
+        }
     } else {
         switch(action) {
             case "load_chapter":
