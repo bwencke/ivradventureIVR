@@ -148,12 +148,13 @@ app.post( '/nextaction', function( request, response ) {
                 sendResponse(ret);
                 return;
             default:
+                story = null;
                 var ret = playMsg("story_digits", "Please enter the 4 digit story id number");
                 sendResponse(ret);
                 return;
         }
     }
-    if(!currentChapter) {
+    if(!currentChapter && story) {
         console.log("Load First Chapter");
         if(action == "first_chapter") {
             currentChapter = new Chapter();
