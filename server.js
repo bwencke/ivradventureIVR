@@ -135,7 +135,7 @@ app.post( '/nextaction', function( request, response ) {
     var digits = request.body.lastdigitsreceived;
     console.log("Action: " + action);
     console.log("Digits: " + digits);
-    if(!story) {
+    if(!story || !action) {
         currentChapter = null;
         previousChoice = null;
         switch(action) {
